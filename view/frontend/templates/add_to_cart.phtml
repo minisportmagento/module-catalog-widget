@@ -1,0 +1,14 @@
+<?php
+    use Minisport\CatalogWidget\Helper\AddToCart as Helper;
+?>
+<?php
+    $helper = $this->helper(Helper::class);
+    $productId = (int) $block->getProductId();
+
+    if (!$productId) {
+        return;
+    }
+
+    $helper->addProduct($productId);
+?>
+<div class="widget--add-to-cart" data-product="<?= $productId ?>" data-hide-qty="<?= $block->getHideQty() ? 'true' : 'false' ?>"></div>

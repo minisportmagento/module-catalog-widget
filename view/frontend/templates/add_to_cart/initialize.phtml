@@ -1,0 +1,96 @@
+<?php
+    use Magento\Framework\Api\SearchCriteriaBuilder;
+    use Magento\Framework\Exception\NoSuchEntityException;
+    use Magento\Catalog\Api\ProductRepositoryInterface;
+    use Minisport\CatalogWidget\Helper\AddToCart as Helper;
+?>
+<?php
+    if (!$json = $block->getProductsAsJson()) {
+        return;
+    }
+
+    // Make sure there is ajaxproo block to render ajaxpro popup
+    $ajaxproBlock = $block->getLayout()->getBlock('ajaxpro.checkout.cart');
+    if (!$ajaxproBlock) {
+        $ajaxproBlock = $block->getLayout()->createBlock(
+            \Swissup\Ajaxpro\Block\Template::class,
+            'ajaxpro.checkout.cart'
+        );
+        $ajaxproBlock->setTemplate('Swissup_Ajaxpro::checkout.cart.phtml');
+        echo $ajaxproBlock->toHtml();
+    }
+?>
+<style type="text/css">
+    .widget--add-to-cart .add-to-cart [name=qty]{
+        max-height: 34px;
+        max-width: 34px;
+        margin: 0 2px;
+        padding-left: 7px;
+        padding-right: 7px;
+        vertical-align: middle
+    }
+
+    .widget--add-to-cart .add-to-cart label {
+        vertical-align: middle
+    }
+
+    .widget--add-to-cart .add-to-cart .product-item-actions {
+        display: block;
+        white-space: nowrap;
+    }
+</style>
+<script type="text/x-magento-template" id="add-to-cart--template--unavailable">
+    <div class="stock unavailable">
+        <span><?= $block->escapeHtml(__('Out of stock')) ?></span>
+    </div>
+</script>
+<script type="text/x-magento-template" id="add-to-cart--template--available">
+    <div class="products-grid add-to-cart">
+        <div class="product-item-actions">
+            <form id="product_addtocart_form_<%= uid %>" action="<%= product.url %>" method="post" data-mage-init='{"catalogAddToCart": {}}'>
+                <?= $block->getBlockHtml('formkey') ?>
+                <% if (!isHideQty) { %>
+                <label class="label" for="qty-<%= uid %>">
+                    <span>Qty</span>
+                </label>
+                <input type="number" name="qty" id="qty-<%= uid %>" value="1" title="<?= __('Qty') ?>" min="0" max="99" class="input-text qty" />
+                <% } %>
+                <button class="action tocart primary" type="submit" title="<?= __('Add to Cart') ?>" id="tocart-<%= uid %>">
+                    <span><?= __('Add to Cart') ?></span>
+                </button>
+            </form>
+        </div>
+    </div>
+</script>
+<script type="text/javascript" data-breeze>
+(() => {
+    'use strict';
+
+    const fn = ($, _) => {
+        const products = <?= $json ?>;
+        const tmplAvailable = $('#add-to-cart--template--available').html();
+        const tmplUnavailable = $('#add-to-cart--template--unavailable').html();
+        const uidTail = Date.now();
+
+        products.forEach((product) => {
+            const tmpl = product.isAvailable ? _.template(tmplAvailable) : _.template(tmplUnavailable);
+
+            $(`.widget--add-to-cart[data-product="${product.id}"]`).each((index, element) => {
+                const $el = $(element);
+                const uid = `${product.id}_${index}_${uidTail}`;
+
+                $el.html(tmpl({
+                    product: product,
+                    uid: uid,
+                    isHideQty: $el.data('hide-qty')
+                })).trigger('contentUpdated');
+            });
+        });
+    }
+
+    if (typeof require === 'function')
+        require(['jquery', 'underscore'], fn);
+    else
+        document.addEventListener('breeze:load', () => fn($, _));
+})();
+</script>
