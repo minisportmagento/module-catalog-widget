@@ -39,15 +39,11 @@
         white-space: nowrap;
     }
 </style>
-<script type="text/x-magento-template" id="add-to-cart--template--unavailable">
-    <div class="stock unavailable">
-        <span><?= $block->escapeHtml(__('Out of stock')) ?></span>
-    </div>
-</script>
-<script type="text/x-magento-template" id="add-to-cart--template--available">
+<script type="text/x-magento-template" id="add-to-cart--template">
+<% if (product.isAvailable) { %>
     <div class="products-grid add-to-cart">
         <div class="product-item-actions">
-            <form id="product_addtocart_form_<%= uid %>" action="<%= product.url %>" method="post" data-mage-init='{"catalogAddToCart": {}}'>
+            <form id="product_addtocart_form_<%= uid %>" action="<%= product.urlAddToCart %>" method="post" data-mage-init='{"catalogAddToCart": {}}'>
                 <?= $block->getBlockHtml('formkey') ?>
                 <% if (!isHideQty) { %>
                 <label class="label" for="qty-<%= uid %>">
@@ -61,6 +57,11 @@
             </form>
         </div>
     </div>
+<% } else { %>
+    <div class="stock unavailable">
+        <span><?= $block->escapeHtml(__('Out of stock')) ?></span>
+    </div>
+<% } %>
 </script>
 <script type="text/javascript" data-breeze>
 (() => {
@@ -68,13 +69,10 @@
 
     const fn = ($, _) => {
         const products = <?= $json ?>;
-        const tmplAvailable = $('#add-to-cart--template--available').html();
-        const tmplUnavailable = $('#add-to-cart--template--unavailable').html();
+        const tmpl = _.template($('#add-to-cart--template').html() || '');
         const uidTail = Date.now();
 
         products.forEach((product) => {
-            const tmpl = product.isAvailable ? _.template(tmplAvailable) : _.template(tmplUnavailable);
-
             $(`.widget--add-to-cart[data-product="${product.id}"]`).each((index, element) => {
                 const $el = $(element);
                 const uid = `${product.id}_${index}_${uidTail}`;

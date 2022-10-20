@@ -85,7 +85,7 @@ class Initialize extends Template
             return [
                 'id' => $product->getId(),
                 'isAvailable' => $product->isAvailable(),
-                'url' => $this->cartHelper->getAddUrl($product)
+                'urlAddToCart' => $product->isAvailable() ? $this->cartHelper->getAddUrl($product) : false
             ];
         }, $products);
 
